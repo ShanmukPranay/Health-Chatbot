@@ -12,7 +12,7 @@ import AdminChats from "./components/Admin/AdminChats";
 import AdminSystem from "./components/Admin/AdminSystem";
 import AdminFeedback from "./components/Admin/AdminFeedback";
 import "./styles.css";
-import "./styles/admin.css";
+import "./styles/Admin.css";
 
 export default function App() {
   return (
