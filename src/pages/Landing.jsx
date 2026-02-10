@@ -16,7 +16,7 @@ export default function Landing() {
 
       {/* Main Content */}
       <div className="landing-container">
-        {/* Logo Section - UPDATED */}
+        {/* Logo Section */}
         <div className="logo-section">
           <div className="logo-wrapper">
             <div className="custom-logo-container">
@@ -25,12 +25,11 @@ export default function Landing() {
                 alt="Health & AI Assistant Logo" 
                 className="custom-logo"
                 style={{
-                  width: "180px",  // Reduced from default
-                  height: "180px", // Reduced from default
+                  width: "200px",
+                  height: "200px",
                   objectFit: "contain"
                 }}
               />
-              <div className="logo-overlay-text"></div>
             </div>
           </div>
           
@@ -38,38 +37,8 @@ export default function Landing() {
           <p className="logo-subtitle">Your Personal Medical & Machine Learning Expert</p>
         </div>
 
-        {/* Welcome Message */}
-        <div className="welcome-section">
-          <h2 className="welcome-title">Welcome</h2>
-          <p className="welcome-description">
-            Get instant health advice and learn machine learning concepts 
-            from our intelligent AI assistant. Your one-stop solution for 
-            medical guidance and AI education.
-          </p>
-        </div>
-
-        {/* Action Buttons */}
+        {/* Action Buttons Section - Only the three main buttons */}
         <div className="action-section">
-          <div className="features-grid">
-            <div className="feature-card">
-              <div className="feature-icon">👨‍⚕️</div>
-              <h3>Health Assistant</h3>
-              <p>Get instant medical advice for common symptoms</p>
-            </div>
-            
-            <div className="feature-card">
-              <div className="feature-icon">🤖</div>
-              <h3>ML Expert</h3>
-              <p>Learn machine learning concepts & programming</p>
-            </div>
-            
-            <div className="feature-card">
-              <div className="feature-icon">💬</div>
-              <h3>24/7 Chat</h3>
-              <p>Always available to answer your questions</p>
-            </div>
-          </div>
-
           <div className="action-buttons">
             <button 
               onClick={() => navigate("/login")}
@@ -95,38 +64,6 @@ export default function Landing() {
               Try as Guest
             </button>
           </div>
-
-          {/* Quick Stats */}
-          <div className="stats-section">
-            <div className="stat-item">
-              <div className="stat-number">500+</div>
-              <div className="stat-label">Health Topics</div>
-            </div>
-            <div className="stat-divider"></div>
-            <div className="stat-item">
-              <div className="stat-number">200+</div>
-              <div className="stat-label">ML Concepts</div>
-            </div>
-            <div className="stat-divider"></div>
-            <div className="stat-item">
-              <div className="stat-number">24/7</div>
-              <div className="stat-label">Availability</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="landing-footer">
-          <p className="footer-text">
-            © 2024 Health & AI Assistant. All rights reserved.
-          </p>
-          <p className="footer-links">
-            <span>Privacy Policy</span>
-            <span>•</span>
-            <span>Terms of Service</span>
-            <span>•</span>
-            <span>Contact Us</span>
-          </p>
         </div>
       </div>
     </div>
