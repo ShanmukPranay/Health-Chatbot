@@ -66,3 +66,473 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* ===== VOICE MODE STYLES ===== */
+/* Add all the voice mode CSS from above here */
+/* Voice Input Container */
+.voice-input-container {
+  position: relative;
+  display: inline-block;
+}
+
+/* Voice Button - Clean Modern Design */
+.voice-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.voice-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.voice-btn:hover::before {
+  width: 100%;
+  height: 100%;
+}
+
+.voice-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.voice-btn:active {
+  transform: scale(0.95);
+}
+
+/* Listening State */
+.voice-btn.listening {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  animation: micPulse 1.5s infinite;
+  box-shadow: 0 0 0 0 rgba(245, 87, 108, 0.4);
+}
+
+@keyframes micPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(245, 87, 108, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(245, 87, 108, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 87, 108, 0);
+  }
+}
+
+/* Disabled Button */
+.voice-btn-disabled {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: #95a5a6;
+  color: #7f8c8d;
+  cursor: not-allowed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.5;
+}
+
+/* Listening Indicator with Sound Waves */
+.listening-indicator {
+  position: fixed;
+  bottom: 100px;
+  right: 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 50px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  animation: slideInUp 0.3s ease;
+  font-weight: 500;
+}
+
+/* Sound Waves Animation */
+.sound-waves {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sound-waves span {
+  width: 3px;
+  height: 15px;
+  background: white;
+  border-radius: 2px;
+  animation: soundWave 0.8s infinite ease-in-out;
+}
+
+.sound-waves span:nth-child(1) {
+  animation-delay: 0s;
+  height: 10px;
+}
+
+.sound-waves span:nth-child(2) {
+  animation-delay: 0.2s;
+  height: 20px;
+}
+
+.sound-waves span:nth-child(3) {
+  animation-delay: 0.4s;
+  height: 15px;
+}
+
+.sound-waves span:nth-child(4) {
+  animation-delay: 0.6s;
+  height: 25px;
+}
+
+@keyframes soundWave {
+  0%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.5);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Error Message */
+.voice-error {
+  position: fixed;
+  bottom: 100px;
+  right: 30px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  z-index: 1000;
+  animation: slideInUp 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .voice-btn,
+  .voice-btn-disabled {
+    width: 42px;
+    height: 42px;
+  }
+  
+  .listening-indicator,
+  .voice-error {
+    bottom: 80px;
+    right: 16px;
+    padding: 10px 18px;
+    font-size: 12px;
+  }
+}
+
+/* Modern Microphone Button */
+.mic-button {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #f0f0f0, #e0e0e0);
+  border: none;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.mic-button:hover {
+  transform: scale(1.08);
+  background: linear-gradient(145deg, #f5f5f5, #e8e8e8);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.mic-button:active {
+  transform: scale(0.95);
+}
+
+/* Microphone Icon Design */
+.mic-icon {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.mic-body {
+  width: 14px;
+  height: 22px;
+  background: #333;
+  border-radius: 7px;
+  position: relative;
+  transition: all 0.3s;
+}
+
+.mic-body::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 3px;
+  background: #333;
+  border-radius: 2px;
+}
+
+.mic-stand {
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 12px;
+  background: #333;
+}
+
+.mic-base {
+  position: absolute;
+  bottom: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 2px;
+  background: #333;
+  border-radius: 1px;
+}
+
+/* Recording State */
+.mic-button.recording {
+  background: linear-gradient(145deg, #ff4757, #ff6b81);
+  box-shadow: 0 0 20px rgba(255, 71, 87, 0.4);
+  animation: micPulse 1.5s infinite;
+}
+
+@keyframes micPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 15px rgba(255, 71, 87, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 71, 87, 0);
+  }
+}
+
+.mic-button.recording .mic-body,
+.mic-button.recording .mic-body::after,
+.mic-button.recording .mic-stand,
+.mic-button.recording .mic-base {
+  background: white;
+}
+
+/* Recording Waves Animation */
+.recording-waves {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.wave {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  opacity: 0;
+}
+
+.wave1 {
+  width: 60px;
+  height: 60px;
+  animation: ripple 1.5s ease-out infinite;
+}
+
+.wave2 {
+  width: 80px;
+  height: 80px;
+  animation: ripple 1.5s ease-out 0.5s infinite;
+}
+
+.wave3 {
+  width: 100px;
+  height: 100px;
+  animation: ripple 1.5s ease-out 1s infinite;
+}
+
+@keyframes ripple {
+  0% {
+    width: 52px;
+    height: 52px;
+    opacity: 0.8;
+  }
+  100% {
+    width: 120px;
+    height: 120px;
+    opacity: 0;
+  }
+}
+
+/* Recording Indicator */
+.recording-indicator {
+  position: fixed;
+  bottom: 100px;
+  right: 30px;
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(10px);
+  padding: 12px 20px;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  animation: slideInUp 0.3s ease;
+}
+
+.recording-dot {
+  width: 12px;
+  height: 12px;
+  background: #ff4757;
+  border-radius: 50%;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.recording-indicator span {
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.recording-time {
+  font-family: monospace;
+  font-size: 13px;
+  color: #ffd700;
+}
+
+/* Error Popup */
+.voice-error-popup {
+  position: fixed;
+  bottom: 100px;
+  right: 30px;
+  background: linear-gradient(135deg, #ff4757, #ff6b81);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 1000;
+  animation: slideInUp 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .mic-button {
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  }
+  
+  .mic-button:hover {
+    background: linear-gradient(145deg, #333, #222);
+  }
+  
+  .mic-body,
+  .mic-body::after,
+  .mic-stand,
+  .mic-base {
+    background: #e0e0e0;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .mic-button {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .recording-indicator,
+  .voice-error-popup {
+    bottom: 80px;
+    right: 16px;
+    padding: 10px 16px;
+  }
+  
+  .mic-icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .mic-body {
+    width: 12px;
+    height: 18px;
+  }
+}

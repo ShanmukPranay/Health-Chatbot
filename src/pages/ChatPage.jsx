@@ -43,46 +43,7 @@ const knowledgeBase = {
     books: `📖 **Recommended Books & Links**\n\n**Textbooks:**\n1. **"Speech and Language Processing"** by Daniel Jurafsky & James H. Martin\n   📚 Amazon: https://amzn.to/3Wk2wPk\n   📘 PDF: https://web.stanford.edu/~jurafsky/slp3/\n\n2. **"Text Mining: Classification, Clustering, and Applications"** by Ashok Srivastava & Mehran Sahami\n   📚 Amazon: https://amzn.to/3YYA8vT\n   📘 CRC Press: https://www.routledge.com/9781420059452\n\n**Reference Books:**\n1. **"Pattern Recognition and Machine Learning"** by Christopher M. Bishop\n   📚 Amazon: https://amzn.to/4ax7sFN\n   📘 Springer: https://www.springer.com/gp/book/9780387310732\n\n2. **"Deep Learning for Natural Language Processing"** by Palash Goyal et al.\n   📚 Amazon: https://amzn.to/3WV32En\n   📘 Springer: https://www.springer.com/gp/book/9783030971734\n\n**Free Resources:**\n• Hugging Face: https://huggingface.co/\n• NLTK Documentation: https://www.nltk.org/\n• spaCy: https://spacy.io/`,
 
     // Example Code
-    examples: `💻 **Code Examples**\n\n**Example 1: Text Preprocessing in Python**\n\`\`\`python
-import nltk
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
-import re
-
-def preprocess_text(text):
-    # Convert to lowercase
-    text = text.lower()
-    # Remove special characters
-    text = re.sub(r'[^a-zA-Z\\s]', '', text)
-    # Tokenize
-    tokens = nltk.word_tokenize(text)
-    # Remove stopwords
-    stop_words = set(stopwords.words('english'))
-    tokens = [word for word in tokens if word not in stop_words]
-    # Lemmatization
-    lemmatizer = WordNetLemmatizer()
-    tokens = [lemmatizer.lemmatize(word) for word in tokens]
-    return ' '.join(tokens)
-
-# Example usage
-sample_text = "Text Analytics is AMAZING! It helps in understanding text data."
-print(preprocess_text(sample_text))
-# Output: "text analytics amazing help understanding text data"
-\`\`\`\n\n**Example 2: TF-IDF Implementation**\n\`\`\`python
-from sklearn.feature_extraction.text import TfidfVectorizer
-
-documents = [
-    "Text analytics is important for data science",
-    "Natural language processing uses text analytics",
-    "Machine learning and NLP are related fields"
-]
-
-vectorizer = TfidfVectorizer()
-tfidf_matrix = vectorizer.fit_transform(documents)
-
-print("Vocabulary:", vectorizer.get_feature_names_out())
-print("TF-IDF Matrix shape:", tfidf_matrix.shape)
-\`\`\``,
+    examples: `💻 **Code Examples**\n\n**Example 1: Text Preprocessing in Python**\n\`\`\`python\nimport nltk\nfrom nltk.corpus import stopwords\nfrom nltk.stem import WordNetLemmatizer\nimport re\n\ndef preprocess_text(text):\n    # Convert to lowercase\n    text = text.lower()\n    # Remove special characters\n    text = re.sub(r'[^a-zA-Z\\s]', '', text)\n    # Tokenize\n    tokens = nltk.word_tokenize(text)\n    # Remove stopwords\n    stop_words = set(stopwords.words('english'))\n    tokens = [word for word in tokens if word not in stop_words]\n    # Lemmatization\n    lemmatizer = WordNetLemmatizer()\n    tokens = [lemmatizer.lemmatize(word) for word in tokens]\n    return ' '.join(tokens)\n\n# Example usage\nsample_text = "Text Analytics is AMAZING! It helps in understanding text data."\nprint(preprocess_text(sample_text))\n# Output: "text analytics amazing help understanding text data"\n\`\`\`\n\n**Example 2: TF-IDF Implementation**\n\`\`\`python\nfrom sklearn.feature_extraction.text import TfidfVectorizer\n\ndocuments = [\n    "Text analytics is important for data science",\n    "Natural language processing uses text analytics",\n    "Machine learning and NLP are related fields"\n]\n\nvectorizer = TfidfVectorizer()\ntfidf_matrix = vectorizer.fit_transform(documents)\n\nprint("Vocabulary:", vectorizer.get_feature_names_out())\nprint("TF-IDF Matrix shape:", tfidf_matrix.shape)\n\`\`\``,
 
     // Career & Projects
     career: `🚀 **Career & Projects**\n\n**Skills Required:**\n• Python programming\n• Statistics & Probability\n• Linguistics basics\n• Machine Learning\n• Deep Learning (for advanced NLP)\n\n**Career Paths:**\n1. **NLP Engineer:** Build text processing systems\n2. **Data Scientist (Text):** Analyze text data\n3. **Research Scientist:** Develop new NLP models\n4. **AI Product Manager:** NLP-based products\n\n**Project Ideas:**\n1. **Sentiment Analyzer:** Classify review sentiments\n2. **Chatbot:** Context-aware conversation\n3. **Text Summarizer:** Automatic document summarization\n4. **Named Entity Recognizer:** Extract entities from news\n5. **Topic Modeling:** Discover themes in documents\n\n**Learning Path:**\n1. Learn Python & NLP libraries (NLTK, spaCy)\n2. Understand text preprocessing\n3. Study ML algorithms for text\n4. Work with word embeddings\n5. Build projects and contribute to GitHub`,
@@ -184,6 +145,19 @@ export default function ChatPage() {
       setIsAdmin(false);
     }
   }, [navigate]);
+
+  // Request microphone permission for voice feature
+  useEffect(() => {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+          stream.getTracks().forEach(track => track.stop());
+        })
+        .catch(err => {
+          console.warn('Microphone permission denied:', err);
+        });
+    }
+  }, []);
 
   // Handle sending messages
   const handleSend = (text) => {
