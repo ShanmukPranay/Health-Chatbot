@@ -36,7 +36,6 @@ export default function Login() {
     setError("");
     
     try {
-      // Connect to backend (Render in production, localhost in development)
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -49,7 +48,6 @@ export default function Login() {
       const data = await response.json();
       
       if (response.ok) {
-        // Save user data from backend
         const userData = {
           id: data.user.id,
           email: data.user.email,
@@ -73,7 +71,7 @@ export default function Login() {
       }
     } catch (err) {
       console.error("Login error:", err);
-      setError("Cannot connect to server. Please make sure the backend is running.");
+      setError("Cannot connect to server. Please try again.");
       setLoading(false);
     }
   };
@@ -82,14 +80,12 @@ export default function Login() {
     navigate("/signup");
   };
 
-  // Test with demo credentials
   const handleDemoLogin = () => {
     setFormData({
       email: "demo@example.com",
       password: "demo123"
     });
     
-    // Auto-submit after a short delay
     setTimeout(() => {
       handleSubmit(new Event("submit"));
     }, 100);
@@ -117,7 +113,6 @@ export default function Login() {
               value={formData.email}
               onChange={handleChange}
               required
-              autoComplete="email"
             />
           </div>
           
@@ -131,82 +126,39 @@ export default function Login() {
               value={formData.password}
               onChange={handleChange}
               required
-              autoComplete="current-password"
             />
-            <div className="forgot-password" style={{ textAlign: 'right', marginTop: '8px' }}>
-              <Link 
-                to="/forgot-password" 
-                className="auth-link" 
-                style={{ fontSize: '14px', fontWeight: '500' }}
-              >
+            <div className="forgot-password">
+              <Link to="/forgot-password" className="auth-link">
                 Forgot password?
               </Link>
             </div>
           </div>
           
-          <button 
-            type="submit" 
-            className="auth-button login-btn"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <span className="loading"></span>
-                Signing In...
-              </>
-            ) : (
-              "Sign In"
-            )}
+          <button type="submit" className="auth-button login-btn" disabled={loading}>
+            {loading ? "Signing In..." : "Sign In"}
           </button>
         </form>
 
-        {/* Demo Login Button */}
-        <button 
-          onClick={handleDemoLogin}
-          className="auth-button demo-btn"
-          style={{
-            marginTop: '15px',
-            background: 'rgba(16, 185, 129, 0.1)',
-            color: '#10b981',
-            border: '2px solid rgba(16, 185, 129, 0.3)'
-          }}
-        >
-          <span>🚀</span> Use Demo Account (demo@example.com / demo123)
+        <button onClick={handleDemoLogin} className="auth-button demo-btn" style={{
+          marginTop: '15px',
+          background: 'rgba(16, 185, 129, 0.1)',
+          color: '#10b981',
+          border: '2px solid rgba(16, 185, 129, 0.3)'
+        }}>
+          🚀 Use Demo Account
         </button>
         
         <div className="auth-divider">
           <span>New to Health Assistant?</span>
         </div>
         
-        <button 
-          onClick={handleSignupRedirect}
-          className="auth-button signup-btn"
-        >
+        <button onClick={handleSignupRedirect} className="auth-button signup-btn">
           Create New Account
         </button>
         
         <p className="auth-footer">
-          By continuing, you agree to our{" "}
-          <span className="auth-link">Terms of Service</span>{" "}
-          and <span className="auth-link">Privacy Policy</span>
+          By continuing, you agree to our Terms of Service and Privacy Policy
         </p>
-
-        {/* Backend Status */}
-        <div className="backend-status" style={{
-          marginTop: '20px',
-          padding: '12px',
-          background: 'rgba(102, 126, 234, 0.1)',
-          borderRadius: '10px',
-          fontSize: '12px',
-          textAlign: 'center'
-        }}>
-          <strong>🔌 Backend Status:</strong>{" "}
-          <span style={{ color: '#10b981', fontWeight: 'bold' }}>
-            {import.meta.env.PROD ? 'Production (Render)' : 'Local (Development)'}
-          </span>
-          <br/>
-          <small>API: {API_URL}</small>
-        </div>
       </div>
     </div>
   );

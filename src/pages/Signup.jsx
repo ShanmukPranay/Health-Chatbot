@@ -2,9 +2,11 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles.css";
 
+// API URL - switches between production and local automatically
 const API_URL = import.meta.env.PROD 
   ? 'https://health-chatbot-backend-w4dl.onrender.com'
   : 'http://localhost:5000';
+
 export default function Signup() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -27,28 +29,26 @@ export default function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validation
-    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+    if (!formData.name || !formData.email || !formData.password) {
       setError("Please fill in all fields");
       return;
     }
-
+    
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords don't match");
+      setError("Passwords do not match");
       return;
     }
-
+    
     if (formData.password.length < 6) {
       setError("Password must be at least 6 characters");
       return;
     }
-
+    
     setLoading(true);
     setError("");
     
     try {
-      // Try Flask backend
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -61,12 +61,12 @@ export default function Signup() {
       const data = await response.json();
       
       if (response.ok) {
-        // Save user data from Flask
         const userData = {
+          id: data.user.id,
           email: data.user.email,
           name: data.user.name,
           role: data.user.role,
-          avatar: data.user.name.charAt(0).toUpperCase(),
+          avatar: data.user.avatar || data.user.name.charAt(0).toUpperCase(),
           token: data.token
         };
         
@@ -74,46 +74,37 @@ export default function Signup() {
         localStorage.setItem("user", JSON.stringify(userData));
         localStorage.setItem("token", data.token);
         
-        navigate("/chat");
-      } else {
-        setError(data.error || "Registration failed");
-      }
-    } catch (err) {
-      console.log("Backend not available, using fallback:", err);
-      // Fallback to local storage
-      const userData = {
-        email: formData.email,
-        name: formData.name,
-        role: "Standard User",
-        joined: new Date().toLocaleDateString(),
-        avatar: formData.name.charAt(0).toUpperCase()
-      };
-      
-      localStorage.setItem("auth", "true");
-      localStorage.setItem("user", JSON.stringify(userData));
-      
-      setTimeout(() => {
+        console.log("✅ Registration successful:", userData.email, "Role:", userData.role);
+        
         setLoading(false);
         navigate("/chat");
-      }, 1500);
-      return;
+      } else {
+        setError(data.error || "Registration failed. Please try again.");
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error("Registration error:", err);
+      setError("Cannot connect to server. Please try again.");
+      setLoading(false);
     }
-    
-    setLoading(false);
+  };
+
+  const handleLoginRedirect = () => {
+    navigate("/login");
   };
 
   return (
     <div className="auth-page">
       <div className="auth-container">
         <div className="auth-header">
-          <span className="auth-icon">✨</span>
+          <span className="auth-icon">👨‍⚕️</span>
           <h1 className="auth-title">Create Account</h1>
-          <p className="auth-subtitle">Join Health & AI Assistant today</p>
+          <p className="auth-subtitle">Join Health Assistant today</p>
         </div>
-
-        <form className="auth-form" onSubmit={handleSubmit}>
+        
+        <form onSubmit={handleSubmit} className="auth-form">
           {error && <div className="error-message">{error}</div>}
-
+          
           <div className="form-group">
             <label className="form-label">Full Name</label>
             <input
@@ -124,10 +115,9 @@ export default function Signup() {
               value={formData.name}
               onChange={handleChange}
               required
-              autoComplete="name"
             />
           </div>
-
+          
           <div className="form-group">
             <label className="form-label">Email Address</label>
             <input
@@ -138,24 +128,22 @@ export default function Signup() {
               value={formData.email}
               onChange={handleChange}
               required
-              autoComplete="email"
             />
           </div>
-
+          
           <div className="form-group">
             <label className="form-label">Password</label>
             <input
               type="password"
               name="password"
               className="form-input"
-              placeholder="Create a password (min 6 chars)"
+              placeholder="Create a password (min 6 characters)"
               value={formData.password}
               onChange={handleChange}
               required
-              autoComplete="new-password"
             />
           </div>
-
+          
           <div className="form-group">
             <label className="form-label">Confirm Password</label>
             <input
@@ -166,41 +154,25 @@ export default function Signup() {
               value={formData.confirmPassword}
               onChange={handleChange}
               required
-              autoComplete="new-password"
             />
           </div>
-
-          <button type="submit" className="auth-button login-btn" disabled={loading}>
-            {loading ? (
-              <>
-                <span className="loading"></span>
-                Creating Account...
-              </>
-            ) : (
-              "Create Account"
-            )}
+          
+          <button type="submit" className="auth-button signup-btn" disabled={loading}>
+            {loading ? "Creating Account..." : "Sign Up"}
           </button>
         </form>
-
+        
         <div className="auth-divider">
-          <span>OR</span>
+          <span>Already have an account?</span>
         </div>
-
-        <button 
-          type="button" 
-          className="auth-button signup-btn"
-          onClick={() => navigate("/login")}
-        >
-          Already have an account? Sign In
+        
+        <button onClick={handleLoginRedirect} className="auth-button login-btn">
+          Sign In
         </button>
-
-        <div className="auth-footer">
-          <p>
-            By creating an account, you agree to our{" "}
-            <Link to="#" className="auth-link">Terms of Service</Link> and{" "}
-            <Link to="#" className="auth-link">Privacy Policy</Link>
-          </p>
-        </div>
+        
+        <p className="auth-footer">
+          By signing up, you agree to our Terms of Service and Privacy Policy
+        </p>
       </div>
     </div>
   );
