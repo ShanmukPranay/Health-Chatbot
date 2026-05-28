@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
 from datetime import datetime, timedelta, timezone
 import jwt
@@ -8,16 +7,12 @@ import os
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
-import logging
-
-# Disable SQLAlchemy warnings
-logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
 
 app = Flask(__name__)
 
-# CORS - Allow all for now
+# CORS - Allow all origins
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # SocketIO
@@ -27,63 +22,23 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "test-secret-key")
 JWT_EXPIRY_HOURS = 24
 
-# Database - Use SQLite for Render first (simpler)
-DATABASE_URL = "sqlite:///health_ai.db"
-print(f"✅ Using SQLite database at /opt/render/project/src/backend/health_ai.db")
+# In-memory database (for testing)
+users = []
+chats = []
 
-app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    'pool_pre_ping': True,
-}
-
-db = SQLAlchemy(app)
-
-# ========== DATABASE MODELS ==========
-class User(db.Model):
-    __tablename__ = 'user'
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    name = db.Column(db.String(100), nullable=False)
-    password_hash = db.Column(db.String(256), nullable=False)
-    role = db.Column(db.String(50), default='Regular User')
-    avatar = db.Column(db.String(10))
-    is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
-    
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-    
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-    
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'email': self.email,
-            'name': self.name,
-            'role': self.role,
-            'avatar': self.avatar or self.name[0].upper(),
-            'is_active': self.is_active
-        }
-
-class Chat(db.Model):
-    __tablename__ = 'chat'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    session_id = db.Column(db.String(100))
-    user_message = db.Column(db.Text)
-    bot_response = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-
-# ========== HELPER FUNCTIONS ==========
+# Helper functions
 def create_auth_token(email):
     payload = {
         'email': email,
         'exp': datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRY_HOURS)
     }
     return jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
+
+def find_user_by_email(email):
+    for user in users:
+        if user['email'] == email:
+            return user
+    return None
 
 # ========== API ROUTES ==========
 @app.route('/')
@@ -107,39 +62,40 @@ def register():
         if len(password) < 6:
             return jsonify({'error': 'Password must be at least 6 characters'}), 400
         
-        existing = User.query.filter_by(email=email).first()
-        if existing:
+        # Check if user exists
+        if find_user_by_email(email):
             return jsonify({'error': 'Email already registered'}), 400
         
-        # Only your specific email gets Admin role
-        if email == "2300031563@kluniversity" or email == "2300031563@kluniversity.in":
-            role = "Admin"
-        else:
-            role = "Regular User"
-        
-        new_user = User(
-            email=email,
-            name=name,
-            role=role,
-            avatar=name[0].upper(),
-            is_active=True
-        )
-        new_user.set_password(password)
-        
-        db.session.add(new_user)
-        db.session.commit()
+        # Create new user
+        user_id = len(users) + 1
+        new_user = {
+            'id': user_id,
+            'email': email,
+            'name': name,
+            'password_hash': generate_password_hash(password),
+            'role': 'Admin' if email == "2300031563@kluniversity" else 'Regular User',
+            'avatar': name[0].upper(),
+            'is_active': True
+        }
+        users.append(new_user)
         
         token = create_auth_token(email)
         
         return jsonify({
             'success': True,
             'message': 'Registration successful',
-            'user': new_user.to_dict(),
+            'user': {
+                'id': user_id,
+                'email': email,
+                'name': name,
+                'role': new_user['role'],
+                'avatar': new_user['avatar'],
+                'is_active': True
+            },
             'token': token
         })
         
     except Exception as e:
-        db.session.rollback()
         print(f"Register error: {e}")
         return jsonify({'error': str(e)}), 500
 
@@ -156,14 +112,21 @@ def login():
         if not email or not password:
             return jsonify({'error': 'Email and password required'}), 400
         
-        user = User.query.filter_by(email=email).first()
+        user = find_user_by_email(email)
         
-        if user and user.check_password(password):
+        if user and check_password_hash(user['password_hash'], password):
             token = create_auth_token(email)
             return jsonify({
                 'success': True,
                 'message': 'Login successful',
-                'user': user.to_dict(),
+                'user': {
+                    'id': user['id'],
+                    'email': user['email'],
+                    'name': user['name'],
+                    'role': user['role'],
+                    'avatar': user['avatar'],
+                    'is_active': user['is_active']
+                },
                 'token': token
             })
         else:
@@ -175,7 +138,7 @@ def login():
 
 @app.route('/api/health', methods=['GET'])
 def health():
-    return jsonify({'status': 'healthy'})
+    return jsonify({'status': 'healthy', 'users': len(users)})
 
 # ========== SOCKET.IO ==========
 @socketio.on('connect')
@@ -197,46 +160,49 @@ def handle_user_message(data):
     msg = data.get('message', '')
     print(f'Message: {msg[:50]}')
     emit('bot_typing', {})
-    emit('bot_response', {'message': f'I received: "{msg[:100]}". How can I help with your health?'})
+    
+    # Simple responses
+    if 'fever' in msg.lower():
+        response = "🌡️ **Fever Treatment**: Rest, drink fluids, and take paracetamol. See a doctor if fever > 103°F or lasts more than 3 days."
+    elif 'headache' in msg.lower():
+        response = "🤕 **Headache Relief**: Rest in a dark room, drink water, and try over-the-counter pain relievers."
+    elif 'hello' in msg.lower() or 'hi' in msg.lower():
+        response = "Hello! I'm your Health Assistant. How can I help you today?"
+    else:
+        response = f"I received your message. I can help with fever, headache, and general health questions. How can I assist you?"
+    
+    emit('bot_response', {'message': response})
 
-# ========== CREATE TABLES ==========
-with app.app_context():
-    print("Creating database tables...")
-    db.create_all()
-    print("✅ Database tables created")
-    
-    # Create demo user if not exists
-    if not User.query.filter_by(email="demo@example.com").first():
-        demo = User(
-            email="demo@example.com",
-            name="Demo User",
-            role="Regular User",
-            avatar="D",
-            is_active=True
-        )
-        demo.set_password("demo123")
-        db.session.add(demo)
-        db.session.commit()
-        print("✅ Demo user created: demo@example.com / demo123")
-    
-    # Create admin user if not exists
-    if not User.query.filter_by(email="2300031563@kluniversity").first():
-        admin = User(
-            email="2300031563@kluniversity",
-            name="Admin User",
-            role="Admin",
-            avatar="A",
-            is_active=True
-        )
-        admin.set_password("Admin@123")
-        db.session.add(admin)
-        db.session.commit()
-        print("✅ Admin user created: 2300031563@kluniversity / Admin@123")
-    
-    # Show all users
-    print("\n📊 Users in database:")
-    for u in User.query.all():
-        print(f"   - {u.email}: {u.role}")
+# ========== INITIALIZE DEMO DATA ==========
+# Create demo user
+if not find_user_by_email("demo@example.com"):
+    demo_user = {
+        'id': 1,
+        'email': "demo@example.com",
+        'name': "Demo User",
+        'password_hash': generate_password_hash("demo123"),
+        'role': "Regular User",
+        'avatar': "D",
+        'is_active': True
+    }
+    users.append(demo_user)
+    print("✅ Demo user created: demo@example.com / demo123")
+
+# Create admin user
+if not find_user_by_email("2300031563@kluniversity"):
+    admin_user = {
+        'id': 2,
+        'email': "2300031563@kluniversity",
+        'name': "Admin User",
+        'password_hash': generate_password_hash("Admin@123"),
+        'role': "Admin",
+        'avatar': "A",
+        'is_active': True
+    }
+    users.append(admin_user)
+    print("✅ Admin user created: 2300031563@kluniversity / Admin@123")
+
+print(f"📊 Total users: {len(users)}")
 
 # ========== MAIN ==========
 if __name__ == "__main__":
