@@ -115,7 +115,7 @@ export default function Login() {
     <div className="auth-page">
       <div className="auth-container">
         <div className="auth-header">
-          <span className="auth-icon">🤖</span>
+          <span className="auth-icon"></span>
           <h1 className="auth-title">Welcome Back</h1>
           <p className="auth-subtitle">Sign in to your Health & AI Assistant</p>
         </div>
