@@ -2,10 +2,8 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles.css";
 
-// API URL - switches between production and local automatically
-const API_URL = import.meta.env.PROD 
-  ? 'https://health-chatbot-backend-w4dl.onrender.com'
-  : 'http://localhost:5000';
+// ========== IMPORTANT: Use your Render backend URL ==========
+const API_BASE_URL = "https://health-chatbot-backend-w4dl.onrender.com";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -36,9 +34,15 @@ export default function Login() {
     setError("");
     
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
+      console.log("Logging in with:", formData.email);
+      console.log("API URL:", `${API_BASE_URL}/api/auth/login`);
+      
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         body: JSON.stringify({
           email: formData.email,
           password: formData.password
@@ -71,7 +75,7 @@ export default function Login() {
       }
     } catch (err) {
       console.error("Login error:", err);
-      setError("Cannot connect to server. Please try again.");
+      setError(`Cannot connect to server: ${err.message}`);
       setLoading(false);
     }
   };
@@ -85,7 +89,6 @@ export default function Login() {
       email: "demo@example.com",
       password: "demo123"
     });
-    
     setTimeout(() => {
       handleSubmit(new Event("submit"));
     }, 100);
@@ -159,6 +162,10 @@ export default function Login() {
         <p className="auth-footer">
           By continuing, you agree to our Terms of Service and Privacy Policy
         </p>
+        
+        <div style={{ marginTop: '15px', fontSize: '12px', textAlign: 'center', color: '#666' }}>
+          Backend: {API_BASE_URL}
+        </div>
       </div>
     </div>
   );
