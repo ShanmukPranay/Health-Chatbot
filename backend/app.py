@@ -57,7 +57,7 @@ OTP_EXPIRY_MINUTES = int(os.environ.get("OTP_EXPIRY_MINUTES", 10))
 TOKEN_EXPIRY_MINUTES = int(os.environ.get("TOKEN_EXPIRY_MINUTES", 15))
 JWT_EXPIRY_HOURS = int(os.environ.get("JWT_EXPIRY_HOURS", 24))
 
-# ========== DATABASE CONFIGURATION (UPDATED FOR SUPABASE) ==========
+# ========== DATABASE CONFIGURATION (FIXED FOR SUPABASE) ==========
 # Get DATABASE_URL from environment
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
@@ -72,20 +72,23 @@ else:
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
     print(f"✅ Using PostgreSQL database")
 
-# Configure SQLAlchemy
+# Configure SQLAlchemy - REMOVED pool_size for Supabase compatibility
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    'pool_size': 5,
-    'pool_recycle': 3600,
-    'pool_pre_ping': True,
-}
 
-# For Supabase connection pooling (add NullPool for production)
-if DATABASE_URL and 'pooler.supabase.com' in DATABASE_URL:
-    from sqlalchemy.pool import NullPool
-    app.config['SQLALCHEMY_ENGINE_OPTIONS']['poolclass'] = NullPool
-    print("✅ Supabase pooler detected - using NullPool")
+# Only add engine options for SQLite, not for Supabase PostgreSQL
+if 'sqlite' in DATABASE_URL:
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_size': 10,
+        'pool_recycle': 3600,
+        'pool_pre_ping': True
+    }
+else:
+    # For Supabase/PostgreSQL, use minimal options (no pool_size)
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_pre_ping': True
+    }
+    print("✅ Supabase PostgreSQL detected - using compatible engine options")
 
 # Email Configuration
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
