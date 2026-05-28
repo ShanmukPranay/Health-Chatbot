@@ -8,6 +8,10 @@ import os
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
+import logging
+
+# Disable SQLAlchemy warnings
+logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
 
@@ -23,18 +27,15 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "test-secret-key")
 JWT_EXPIRY_HOURS = 24
 
-# Database - Use SQLite for simplicity first
-DATABASE_URL = os.environ.get("DATABASE_URL")
-if DATABASE_URL:
-    if DATABASE_URL.startswith("postgres://"):
-        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
-    print(f"✅ Using PostgreSQL")
-else:
-    DATABASE_URL = "sqlite:///health_ai.db"
-    print(f"✅ Using SQLite")
+# Database - Use SQLite for Render first (simpler)
+DATABASE_URL = "sqlite:///health_ai.db"
+print(f"✅ Using SQLite database at /opt/render/project/src/backend/health_ai.db")
 
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,
+}
 
 db = SQLAlchemy(app)
 
@@ -49,6 +50,7 @@ class User(db.Model):
     avatar = db.Column(db.String(10))
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -102,12 +104,15 @@ def register():
         if not email or not name or not password:
             return jsonify({'error': 'All fields required'}), 400
         
+        if len(password) < 6:
+            return jsonify({'error': 'Password must be at least 6 characters'}), 400
+        
         existing = User.query.filter_by(email=email).first()
         if existing:
             return jsonify({'error': 'Email already registered'}), 400
         
-        # Only admin email gets Admin role
-        if email == "2300031563@kluniversity":
+        # Only your specific email gets Admin role
+        if email == "2300031563@kluniversity" or email == "2300031563@kluniversity.in":
             role = "Admin"
         else:
             role = "Regular User"
@@ -134,6 +139,7 @@ def register():
         })
         
     except Exception as e:
+        db.session.rollback()
         print(f"Register error: {e}")
         return jsonify({'error': str(e)}), 500
 
@@ -193,22 +199,46 @@ def handle_user_message(data):
     emit('bot_typing', {})
     emit('bot_response', {'message': f'I received: "{msg[:100]}". How can I help with your health?'})
 
-# ========== INIT DATABASE ==========
-def init_db():
-    with app.app_context():
-        db.create_all()
-        print("✅ Database created")
-        
-        # Create demo user
-        if not User.query.filter_by(email="demo@example.com").first():
-            demo = User(email="demo@example.com", name="Demo User", role="Regular User", avatar="D")
-            demo.set_password("demo123")
-            db.session.add(demo)
-            db.session.commit()
-            print("✅ Demo user created")
+# ========== CREATE TABLES ==========
+with app.app_context():
+    print("Creating database tables...")
+    db.create_all()
+    print("✅ Database tables created")
+    
+    # Create demo user if not exists
+    if not User.query.filter_by(email="demo@example.com").first():
+        demo = User(
+            email="demo@example.com",
+            name="Demo User",
+            role="Regular User",
+            avatar="D",
+            is_active=True
+        )
+        demo.set_password("demo123")
+        db.session.add(demo)
+        db.session.commit()
+        print("✅ Demo user created: demo@example.com / demo123")
+    
+    # Create admin user if not exists
+    if not User.query.filter_by(email="2300031563@kluniversity").first():
+        admin = User(
+            email="2300031563@kluniversity",
+            name="Admin User",
+            role="Admin",
+            avatar="A",
+            is_active=True
+        )
+        admin.set_password("Admin@123")
+        db.session.add(admin)
+        db.session.commit()
+        print("✅ Admin user created: 2300031563@kluniversity / Admin@123")
+    
+    # Show all users
+    print("\n📊 Users in database:")
+    for u in User.query.all():
+        print(f"   - {u.email}: {u.role}")
 
 # ========== MAIN ==========
 if __name__ == "__main__":
-    init_db()
     port = int(os.environ.get("PORT", 5000))
     socketio.run(app, host="0.0.0.0", port=port, debug=False)
