@@ -3,7 +3,7 @@ from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO, emit
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, text
 import smtplib
 import random
 import os
@@ -57,14 +57,35 @@ OTP_EXPIRY_MINUTES = int(os.environ.get("OTP_EXPIRY_MINUTES", 10))
 TOKEN_EXPIRY_MINUTES = int(os.environ.get("TOKEN_EXPIRY_MINUTES", 15))
 JWT_EXPIRY_HOURS = int(os.environ.get("JWT_EXPIRY_HOURS", 24))
 
-# Database
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL", "sqlite:///health_ai.db")
+# ========== DATABASE CONFIGURATION (UPDATED FOR SUPABASE) ==========
+# Get DATABASE_URL from environment
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+# If no DATABASE_URL, use SQLite for development
+if not DATABASE_URL:
+    DATABASE_URL = "sqlite:///health_ai.db"
+    print("⚠️ DATABASE_URL not set. Using SQLite (development mode)")
+    print("   For production, set DATABASE_URL environment variable")
+else:
+    # Convert postgres:// to postgresql:// for SQLAlchemy 1.4+
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    print(f"✅ Using PostgreSQL database")
+
+# Configure SQLAlchemy
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    'pool_size': 10,
+    'pool_size': 5,
     'pool_recycle': 3600,
-    'pool_pre_ping': True
+    'pool_pre_ping': True,
 }
+
+# For Supabase connection pooling (add NullPool for production)
+if DATABASE_URL and 'pooler.supabase.com' in DATABASE_URL:
+    from sqlalchemy.pool import NullPool
+    app.config['SQLALCHEMY_ENGINE_OPTIONS']['poolclass'] = NullPool
+    print("✅ Supabase pooler detected - using NullPool")
 
 # Email Configuration
 EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
@@ -361,12 +382,20 @@ def init_database():
     with app.app_context():
         try:
             from sqlalchemy import inspect
-            inspector = inspect(db.engine)
-            tables_exist = inspector.has_table('user')
             
-            if not tables_exist:
-                db.create_all()
-                print("✅ Database tables created successfully")
+            # Create tables if they don't exist
+            db.create_all()
+            print("✅ Database tables created/verified")
+            
+            # For PostgreSQL, enable UUID extension (optional)
+            if DATABASE_URL and 'postgresql' in DATABASE_URL:
+                try:
+                    with db.engine.connect() as conn:
+                        conn.execute(text('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'))
+                        conn.commit()
+                        print("✅ UUID extension enabled")
+                except Exception as e:
+                    print(f"⚠️ Could not enable UUID extension: {e}")
             
             # Create admin user
             admin_user = User.query.filter_by(email=ADMIN_EMAIL).first()
@@ -381,6 +410,8 @@ def init_database():
                 admin_user.set_password(ADMIN_PASSWORD)
                 db.session.add(admin_user)
                 print(f"✅ Admin user created: {ADMIN_EMAIL}")
+            else:
+                print(f"✅ Admin user already exists: {ADMIN_EMAIL}")
             
             # Create demo user
             demo_user = User.query.filter_by(email="demo@example.com").first()
@@ -395,12 +426,19 @@ def init_database():
                 demo_user.set_password("demo123")
                 db.session.add(demo_user)
                 print("✅ Demo user created: demo@example.com")
+            else:
+                print("✅ Demo user already exists: demo@example.com")
             
             db.session.commit()
             print("✅ Database initialization complete")
             
+            # Print statistics
+            admin_count = User.query.filter_by(role='Admin').count()
+            regular_count = User.query.filter_by(role='Regular User').count()
+            print(f"📊 Users: Admin={admin_count}, Regular={regular_count}")
+            
         except Exception as e:
-            print(f"❌ Database init failed: {str(e)}")
+            print(f"❌ Database initialization failed: {str(e)}")
             db.session.rollback()
 
 # ========== API ROUTES ==========
@@ -432,8 +470,7 @@ def login():
             if not user.is_active:
                 return jsonify({'error': 'Account is deactivated'}), 403
             
-            # ✅ IMPORTANT: Do NOT change user role here!
-            # Just update last login time
+            # Update last login time
             user.updated_at = datetime.now(timezone.utc)
             db.session.commit()
             
@@ -477,16 +514,13 @@ def register():
         if existing_user:
             return jsonify({'error': 'Email already registered'}), 400
         
-        # ========== CRITICAL FIX: ROLE ASSIGNMENT ==========
-        # ONLY the hardcoded ADMIN_EMAIL gets Admin role
-        # EVERYONE else gets Regular User (NOT Premium User)
+        # Role assignment - ONLY admin email gets Admin role
         if email == ADMIN_EMAIL:
             role = "Admin"
             print(f"👑 Admin user registering: {email}")
         else:
-            role = "Regular User"  # ✅ FIXED: Changed from "Premium User"
+            role = "Regular User"
             print(f"👤 Regular user registering: {email} as {role}")
-        # ===================================================
         
         # Create new user
         new_user = User(
@@ -544,6 +578,7 @@ if __name__ == "__main__":
     print(f"🔧 API URL: {API_URL}")
     print(f"🔌 WebSocket: ws://{HOST_IP}:{BACKEND_PORT}")
     print(f"📡 Allowed Origins: {ALLOWED_ORIGINS}")
+    print(f"🗄️ Database: {'PostgreSQL (Supabase)' if DATABASE_URL and 'postgresql' in DATABASE_URL else 'SQLite'}")
     print("=" * 70)
     print("✅ Socket.IO enabled - Real-time chat active!")
     print("=" * 70)

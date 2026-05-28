@@ -1,0 +1,10 @@
+flask
+flask-cors
+flask-sqlalchemy
+flask-socketio
+eventlet
+psycopg2-binary
+pyjwt
+werkzeug
+python-dotenv
+gunicorn

@@ -106,10 +106,14 @@ export default function ChatPage() {
       const parsedUser = JSON.parse(userData);
       setUser(parsedUser);
       
-      // Only true for exact "Admin" role
-      const adminCheck = parsedUser.role === "Admin" || 
-                        parsedUser.role === "Super Admin" || 
-                        parsedUser.role === "Administrator";
+      // ========== ONLY SPECIFIC EMAIL GETS ADMIN ACCESS ==========
+      // Only 2300031563@kluniversity (or variations) gets Admin Panel
+      const adminEmails = [
+        "2300031563@kluniversity",
+        "2300031563@kluniversity.in", 
+        "2300031563"
+      ];
+      const adminCheck = adminEmails.includes(parsedUser.email);
       setIsAdmin(adminCheck);
       
       console.log("User loaded:", parsedUser.email, "Role:", parsedUser.role, "IsAdmin:", adminCheck);
@@ -333,9 +337,12 @@ export default function ChatPage() {
                   <div className="user-email">{user.email || "user@example.com"}</div>
                   <div className="user-role-badge">
                     <span className={`role-tag ${user.role?.toLowerCase().replace(' ', '-') || 'guest'}`}>
-                      {user.role === 'Admin' ? 'Admin' : (user.role === 'Premium User' ? 'Premium User' : 'Regular User')}
+                      {user.role === 'Admin' || user.role === 'Premium User' ? 'Premium User' : 'Regular User'}
                     </span>
-                    {user.role === 'Admin' && <span className="admin-badge">👑 Admin</span>}
+                    {/* Only show Admin badge for specific admin email */}
+                    {(user.email === "2300031563@kluniversity" || 
+                      user.email === "2300031563@kluniversity.in" || 
+                      user.email === "2300031563") && <span className="admin-badge">👑 Admin</span>}
                   </div>
                 </div>
               </div>
@@ -343,6 +350,7 @@ export default function ChatPage() {
           </div>
           
           <div className="header-right">
+            {/* Only show Admin Panel button for specific admin email */}
             {isAdmin && (
               <button onClick={goToAdminPanel} className="header-btn admin-btn">
                 👑 Admin Panel
