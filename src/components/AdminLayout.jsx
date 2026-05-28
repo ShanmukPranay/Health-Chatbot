@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
-import "../styles/admin.css";
-
+import "../styles/Admin.css";
 export default function AdminLayout() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
