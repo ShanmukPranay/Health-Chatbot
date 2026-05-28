@@ -7,22 +7,17 @@ class SocketService {
     this.listeners = new Map();
   }
 
-  // Get the correct socket URL
+  // Get the correct socket URL - ALWAYS use Render backend in production
   getSocketUrl() {
-    // Get the current hostname from browser
-    const hostname = window.location.hostname;
-    
-    console.log('📍 Current hostname:', hostname);
-    
-    // If accessing via IP address (for sharing with friends)
-    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      const socketUrl = `http://${hostname}:5000`;
-      console.log('🔌 Using network socket URL:', socketUrl);
-      return socketUrl;
+    // Production mode - always use Render backend
+    if (import.meta.env.PROD) {
+      const productionUrl = 'https://health-chatbot-backend-w4dl.onrender.com';
+      console.log('🔌 Production mode - using:', productionUrl);
+      return productionUrl;
     }
     
-    // Default local development
-    console.log('🔌 Using local socket URL: http://localhost:5000');
+    // Development mode (localhost)
+    console.log('🔌 Development mode - using: http://localhost:5000');
     return 'http://localhost:5000';
   }
 
@@ -37,17 +32,18 @@ class SocketService {
     console.log('🔌 Connecting to socket server...', SOCKET_URL);
     
     this.socket = io(SOCKET_URL, {
-      transports: ['websocket', 'polling'],  // polling as fallback
+      transports: ['websocket', 'polling'],
       auth: {
         userId: userId,
         userName: userName,
         role: userRole
       },
       reconnection: true,
-      reconnectionAttempts: 10,  // Increased attempts
+      reconnectionAttempts: 10,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      timeout: 20000
+      timeout: 20000,
+      withCredentials: true
     });
 
     this.socket.on('connect', () => {
@@ -61,7 +57,6 @@ class SocketService {
       console.log('❌ Socket disconnected:', reason);
       this.isConnected = false;
       
-      // Try to reconnect if server disconnected
       if (reason === 'io server disconnect') {
         setTimeout(() => {
           console.log('🔄 Attempting to reconnect...');
