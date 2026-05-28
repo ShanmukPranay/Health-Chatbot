@@ -2,7 +2,10 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles.css";
 
-const API_BASE_URL = "http://localhost:5000/api";
+// API URL - switches between production and local automatically
+const API_URL = import.meta.env.PROD 
+  ? 'https://health-chatbot-backend-w4dl.onrender.com'
+  : 'http://localhost:5000';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -33,8 +36,8 @@ export default function Login() {
     setError("");
     
     try {
-      // Try to connect to Flask backend first
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      // Connect to backend (Render in production, localhost in development)
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -46,8 +49,9 @@ export default function Login() {
       const data = await response.json();
       
       if (response.ok) {
-        // Save user data from Flask
+        // Save user data from backend
         const userData = {
+          id: data.user.id,
           email: data.user.email,
           name: data.user.name,
           role: data.user.role,
@@ -59,37 +63,19 @@ export default function Login() {
         localStorage.setItem("user", JSON.stringify(userData));
         localStorage.setItem("token", data.token);
         
+        console.log("✅ Login successful:", userData.email, "Role:", userData.role);
+        
         setLoading(false);
         navigate("/chat");
       } else {
-        // If Flask returns error, fall back to simulation
-        setError(data.error || "Login failed. Using demo mode...");
-        fallbackLogin();
+        setError(data.error || "Login failed. Please check your credentials.");
+        setLoading(false);
       }
     } catch (err) {
-      console.log("Backend not available, using fallback:", err);
-      // If backend is not reachable, use fallback
-      fallbackLogin();
-    }
-  };
-
-  const fallbackLogin = () => {
-    // Fallback to simulation mode
-    setTimeout(() => {
-      const userData = {
-        email: formData.email,
-        name: formData.email.split('@')[0],
-        role: "Premium User",
-        joined: new Date().toLocaleDateString(),
-        avatar: formData.email.charAt(0).toUpperCase()
-      };
-      
-      localStorage.setItem("auth", "true");
-      localStorage.setItem("user", JSON.stringify(userData));
-      
+      console.error("Login error:", err);
+      setError("Cannot connect to server. Please make sure the backend is running.");
       setLoading(false);
-      navigate("/chat");
-    }, 1500);
+    }
   };
 
   const handleSignupRedirect = () => {
@@ -105,9 +91,7 @@ export default function Login() {
     
     // Auto-submit after a short delay
     setTimeout(() => {
-      document.querySelector("form").dispatchEvent(
-        new Event("submit", { cancelable: true, bubbles: true })
-      );
+      handleSubmit(new Event("submit"));
     }, 100);
   };
 
@@ -115,9 +99,9 @@ export default function Login() {
     <div className="auth-page">
       <div className="auth-container">
         <div className="auth-header">
-          <span className="auth-icon"></span>
+          <span className="auth-icon">👨‍⚕️</span>
           <h1 className="auth-title">Welcome Back</h1>
-          <p className="auth-subtitle">Sign in to your Health & AI Assistant</p>
+          <p className="auth-subtitle">Sign in to your Personal Health Assistant</p>
         </div>
         
         <form onSubmit={handleSubmit} className="auth-form">
@@ -149,7 +133,6 @@ export default function Login() {
               required
               autoComplete="current-password"
             />
-            {/* Forgot Password Link */}
             <div className="forgot-password" style={{ textAlign: 'right', marginTop: '8px' }}>
               <Link 
                 to="/forgot-password" 
@@ -192,7 +175,7 @@ export default function Login() {
         </button>
         
         <div className="auth-divider">
-          <span>New to Health & AI?</span>
+          <span>New to Health Assistant?</span>
         </div>
         
         <button 
@@ -215,15 +198,14 @@ export default function Login() {
           background: 'rgba(102, 126, 234, 0.1)',
           borderRadius: '10px',
           fontSize: '12px',
-          color: '#555',
           textAlign: 'center'
         }}>
           <strong>🔌 Backend Status:</strong>{" "}
           <span style={{ color: '#10b981', fontWeight: 'bold' }}>
-            Connected to Flask
+            {import.meta.env.PROD ? 'Production (Render)' : 'Local (Development)'}
           </span>
           <br/>
-          <small>Using: {API_BASE_URL}</small>
+          <small>API: {API_URL}</small>
         </div>
       </div>
     </div>

@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles.css";
 
-const API_BASE_URL = "http://localhost:5000/api";
-
+const API_URL = import.meta.env.PROD 
+  ? 'https://health-chatbot-backend-w4dl.onrender.com'
+  : 'http://localhost:5000';
 export default function Signup() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
