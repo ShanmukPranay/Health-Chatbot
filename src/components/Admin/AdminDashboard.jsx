@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import "../../styles/admin.css";
-
+import "../../styles/Admin.css";
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [recentUsers, setRecentUsers] = useState([]);
