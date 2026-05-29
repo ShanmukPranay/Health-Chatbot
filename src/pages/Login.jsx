@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles.css";
 
-// Direct Render backend URL
+// Use the exact working URL from your test
 const API_BASE_URL = "https://health-chatbot-backend-w4dl.onrender.com";
 
 export default function Login() {
@@ -34,9 +34,10 @@ export default function Login() {
     setError("");
     
     try {
-      console.log("Logging in with:", formData.email);
+      const url = `${API_BASE_URL}/api/auth/login`;
+      console.log("🟢 Fetching:", url);
       
-      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      const response = await fetch(url, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json"
@@ -47,11 +48,12 @@ export default function Login() {
         })
       });
 
+      console.log("🟢 Response status:", response.status);
       const data = await response.json();
+      console.log("🟢 Response data:", data);
       
       if (response.ok) {
         const userData = {
-          id: data.user.id,
           email: data.user.email,
           name: data.user.name,
           role: data.user.role,
@@ -63,23 +65,18 @@ export default function Login() {
         localStorage.setItem("user", JSON.stringify(userData));
         localStorage.setItem("token", data.token);
         
-        console.log("✅ Login successful:", userData.email);
-        
+        console.log("✅ Login successful!");
         setLoading(false);
         navigate("/chat");
       } else {
-        setError(data.error || "Login failed. Please check your credentials.");
+        setError(data.error || "Login failed");
         setLoading(false);
       }
     } catch (err) {
-      console.error("Login error:", err);
-      setError("Cannot connect to server. Please make sure the backend is running.");
+      console.error("🔴 Login error:", err);
+      setError(`Cannot connect to server: ${err.message}`);
       setLoading(false);
     }
-  };
-
-  const handleSignupRedirect = () => {
-    navigate("/signup");
   };
 
   const handleDemoLogin = () => {
@@ -87,6 +84,7 @@ export default function Login() {
       email: "demo@example.com",
       password: "demo123"
     });
+    // Auto submit after setting credentials
     setTimeout(() => {
       handleSubmit(new Event("submit"));
     }, 100);
@@ -128,11 +126,6 @@ export default function Login() {
               onChange={handleChange}
               required
             />
-            <div className="forgot-password">
-              <Link to="/forgot-password" className="auth-link">
-                Forgot password?
-              </Link>
-            </div>
           </div>
           
           <button type="submit" className="auth-button login-btn" disabled={loading}>
@@ -146,20 +139,16 @@ export default function Login() {
           color: '#10b981',
           border: '2px solid rgba(16, 185, 129, 0.3)'
         }}>
-          🚀 Use Demo Account
+          🚀 Demo Login
         </button>
         
         <div className="auth-divider">
           <span>New to Health Assistant?</span>
         </div>
         
-        <button onClick={handleSignupRedirect} className="auth-button signup-btn">
+        <button onClick={() => navigate("/signup")} className="auth-button signup-btn">
           Create New Account
         </button>
-        
-        <p className="auth-footer">
-          By continuing, you agree to our Terms of Service and Privacy Policy
-        </p>
       </div>
     </div>
   );
