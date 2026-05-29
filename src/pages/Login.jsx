@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles.css";
 
-// ========== IMPORTANT: Use your Render backend URL ==========
-const API_BASE_URL = "https://health-chatbot-backend-w4dl.onrender.com";
+// ========== USE RELATIVE PATH FOR API (Vercel will proxy) ==========
+// No hardcoded URL - use relative path so Vercel handles routing
+const API_BASE_URL = "";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -35,9 +36,9 @@ export default function Login() {
     
     try {
       console.log("Logging in with:", formData.email);
-      console.log("API URL:", `${API_BASE_URL}/api/auth/login`);
+      console.log("API URL:", `/api/auth/login`);
       
-      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      const response = await fetch(`/api/auth/login`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -75,7 +76,7 @@ export default function Login() {
       }
     } catch (err) {
       console.error("Login error:", err);
-      setError(`Cannot connect to server: ${err.message}`);
+      setError(`Cannot connect to server. Please try again.`);
       setLoading(false);
     }
   };
@@ -162,10 +163,6 @@ export default function Login() {
         <p className="auth-footer">
           By continuing, you agree to our Terms of Service and Privacy Policy
         </p>
-        
-        <div style={{ marginTop: '15px', fontSize: '12px', textAlign: 'center', color: '#666' }}>
-          Backend: {API_BASE_URL}
-        </div>
       </div>
     </div>
   );
