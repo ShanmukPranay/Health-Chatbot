@@ -75,11 +75,14 @@ def register():
             'password_hash': generate_password_hash(password),
             'role': 'Admin' if email == "2300031563@kluniversity" else 'Regular User',
             'avatar': name[0].upper(),
-            'is_active': True
+            'is_active': True,
+            'created_at': datetime.now(timezone.utc).isoformat()
         }
         users.append(new_user)
         
         token = create_auth_token(email)
+        
+        print(f"🆕 NEW USER REGISTERED: {email} | Name: {name} | Role: {new_user['role']}")
         
         return jsonify({
             'success': True,
@@ -116,6 +119,7 @@ def login():
         
         if user and check_password_hash(user['password_hash'], password):
             token = create_auth_token(email)
+            print(f"✅ User logged in: {email}")
             return jsonify({
                 'success': True,
                 'message': 'Login successful',
@@ -139,6 +143,27 @@ def login():
 @app.route('/api/health', methods=['GET'])
 def health():
     return jsonify({'status': 'healthy', 'users': len(users)})
+
+# ========== NEW: ADMIN USERS LIST API ==========
+@app.route('/api/admin/users-list', methods=['GET'])
+def get_users_list():
+    """Get all registered users (no authentication required for easy access)"""
+    user_list = [{
+        'id': u['id'],
+        'email': u['email'],
+        'name': u['name'],
+        'role': u['role'],
+        'avatar': u['avatar'],
+        'is_active': u['is_active'],
+        'created_at': u.get('created_at', 'N/A')
+    } for u in users]
+    
+    return jsonify({
+        'users': user_list,
+        'count': len(user_list),
+        'admins': len([u for u in users if u['role'] == 'Admin']),
+        'regular_users': len([u for u in users if u['role'] == 'Regular User'])
+    })
 
 # ========== SOCKET.IO ==========
 @socketio.on('connect')
@@ -183,7 +208,8 @@ if not find_user_by_email("demo@example.com"):
         'password_hash': generate_password_hash("demo123"),
         'role': "Regular User",
         'avatar': "D",
-        'is_active': True
+        'is_active': True,
+        'created_at': datetime.now(timezone.utc).isoformat()
     }
     users.append(demo_user)
     print("✅ Demo user created: demo@example.com / demo123")
@@ -197,7 +223,8 @@ if not find_user_by_email("2300031563@kluniversity"):
         'password_hash': generate_password_hash("Admin@123"),
         'role': "Admin",
         'avatar': "A",
-        'is_active': True
+        'is_active': True,
+        'created_at': datetime.now(timezone.utc).isoformat()
     }
     users.append(admin_user)
     print("✅ Admin user created: 2300031563@kluniversity / Admin@123")
