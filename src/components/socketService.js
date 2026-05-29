@@ -8,10 +8,9 @@ class SocketService {
   }
 
   connect(userId, userName, userRole = 'user') {
-    // Direct Render backend URL
     const SOCKET_URL = 'https://health-chatbot-backend-w4dl.onrender.com';
     
-    console.log('🔌 Connecting to:', SOCKET_URL);
+    console.log('🔌 Connecting to socket:', SOCKET_URL);
     
     if (this.socket && this.socket.connected) {
       return this.socket;
@@ -37,7 +36,7 @@ class SocketService {
     });
 
     this.socket.on('connect_error', (error) => {
-      console.error('❌ Connection error:', error.message);
+      console.error('❌ Socket error:', error.message);
       this.isConnected = false;
     });
 

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles.css";
 
-// Use the exact working URL from your test
+// Your Render backend URL
 const API_BASE_URL = "https://health-chatbot-backend-w4dl.onrender.com";
 
 export default function Login() {
@@ -34,10 +34,9 @@ export default function Login() {
     setError("");
     
     try {
-      const url = `${API_BASE_URL}/api/auth/login`;
-      console.log("🟢 Fetching:", url);
+      console.log("Logging in with:", formData.email);
       
-      const response = await fetch(url, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json"
@@ -48,12 +47,11 @@ export default function Login() {
         })
       });
 
-      console.log("🟢 Response status:", response.status);
       const data = await response.json();
-      console.log("🟢 Response data:", data);
       
       if (response.ok) {
         const userData = {
+          id: data.user.id,
           email: data.user.email,
           name: data.user.name,
           role: data.user.role,
@@ -65,16 +63,17 @@ export default function Login() {
         localStorage.setItem("user", JSON.stringify(userData));
         localStorage.setItem("token", data.token);
         
-        console.log("✅ Login successful!");
+        console.log("✅ Login successful:", userData.email);
+        
         setLoading(false);
         navigate("/chat");
       } else {
-        setError(data.error || "Login failed");
+        setError(data.error || "Login failed. Please check your credentials.");
         setLoading(false);
       }
     } catch (err) {
-      console.error("🔴 Login error:", err);
-      setError(`Cannot connect to server: ${err.message}`);
+      console.error("Login error:", err);
+      setError("Cannot connect to server. Please try again.");
       setLoading(false);
     }
   };
@@ -84,7 +83,6 @@ export default function Login() {
       email: "demo@example.com",
       password: "demo123"
     });
-    // Auto submit after setting credentials
     setTimeout(() => {
       handleSubmit(new Event("submit"));
     }, 100);
@@ -126,6 +124,11 @@ export default function Login() {
               onChange={handleChange}
               required
             />
+            <div className="forgot-password">
+              <Link to="/forgot-password" className="auth-link">
+                Forgot password?
+              </Link>
+            </div>
           </div>
           
           <button type="submit" className="auth-button login-btn" disabled={loading}>
@@ -139,7 +142,7 @@ export default function Login() {
           color: '#10b981',
           border: '2px solid rgba(16, 185, 129, 0.3)'
         }}>
-          🚀 Demo Login
+          🚀 Use Demo Account
         </button>
         
         <div className="auth-divider">
@@ -149,6 +152,10 @@ export default function Login() {
         <button onClick={() => navigate("/signup")} className="auth-button signup-btn">
           Create New Account
         </button>
+        
+        <p className="auth-footer">
+          By continuing, you agree to our Terms of Service and Privacy Policy
+        </p>
       </div>
     </div>
   );

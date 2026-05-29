@@ -86,10 +86,6 @@ export default function Signup() {
     }
   };
 
-  const handleLoginRedirect = () => {
-    navigate("/login");
-  };
-
   return (
     <div className="auth-page">
       <div className="auth-container">
@@ -163,7 +159,7 @@ export default function Signup() {
           <span>Already have an account?</span>
         </div>
         
-        <button onClick={handleLoginRedirect} className="auth-button login-btn">
+        <button onClick={() => navigate("/login")} className="auth-button login-btn">
           Sign In
         </button>
         
