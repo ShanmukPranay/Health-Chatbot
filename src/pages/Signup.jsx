@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "../styles.css";
 
-// ========== IMPORTANT: Use your Render backend URL ==========
 const API_BASE_URL = "https://health-chatbot-backend-w4dl.onrender.com";
 
 export default function Signup() {
@@ -46,15 +45,9 @@ export default function Signup() {
     setError("");
     
     try {
-      console.log("Registering:", formData.email);
-      console.log("API URL:", `${API_BASE_URL}/api/auth/register`);
-      
       const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
@@ -83,12 +76,12 @@ export default function Signup() {
         setLoading(false);
         navigate("/chat");
       } else {
-        setError(data.error || "Registration failed. Please try again.");
+        setError(data.error || "Registration failed");
         setLoading(false);
       }
     } catch (err) {
       console.error("Registration error:", err);
-      setError(`Cannot connect to server: ${err.message}`);
+      setError("Cannot connect to server");
       setLoading(false);
     }
   };
@@ -177,10 +170,6 @@ export default function Signup() {
         <p className="auth-footer">
           By signing up, you agree to our Terms of Service and Privacy Policy
         </p>
-        
-        <div style={{ marginTop: '15px', fontSize: '12px', textAlign: 'center', color: '#666' }}>
-          Backend: {API_BASE_URL}
-        </div>
       </div>
     </div>
   );
